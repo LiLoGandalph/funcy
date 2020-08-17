@@ -1,0 +1,16 @@
+name: funcy
+description: Utility classes and functions for comfortable and "safe" functional programming.
+
+version: 0.0.1
+
+environment:
+  sdk: '>=2.6.0 <3.0.0'
+
+dependencies:
+ equatable: ^1.2.3
+ meta: ^1.2.2
+
+dev_dependencies:
+  pedantic:
+  effective_dart:
+  test: ^1.6.0
