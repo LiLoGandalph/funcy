@@ -22,12 +22,12 @@ extension FutureEitherTransformerExtension<L, R> on Future<Either<L, R>> {
 }
 
 /// [Future]-[Loadable] monad transformer extension.
-extension FutureLoadableTransformerExtension<T> on Future<Loadable<T>> {
+extension FutureLoadableTransformerExtension<F, S> on Future<Loadable<F, S>> {
   /// Gets "inside" the future and performs [map] on inner [Loadable].
-  Future<Loadable<R>> map<R>(R Function(T) f) =>
+  Future<Loadable<F, R>> map<R>(R Function(S data) f) =>
       then((loadable) => loadable.map(f));
 
   /// Gets "inside" the future and performs [bind] on inner [Loadable].
-  Future<Loadable<R>> bind<R>(Loadable<R> Function(T) f) =>
+  Future<Loadable<F, R>> bind<R>(Loadable<F, R> Function(S data) f) =>
       then((loadable) => loadable.bind(f));
 }

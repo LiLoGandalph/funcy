@@ -7,21 +7,20 @@ import '../../funcy.dart';
 ///
 /// * [Loading] - loading is in progress, no data;
 /// * [Loaded] - loading is done:
-///   - [Failed]: loading failed, no data;
+///   - [Failed]: loading failed, has [Failed.failure];
 ///   - [Success]: [Success.data] is loaded successfully.
 @immutable
-abstract class Loadable<T> extends Equatable
-    implements Monad<T>, Alternative<T> {
+abstract class Loadable<F, S> extends Equatable implements Monad<S> {
   const Loadable._();
 
   /// Loading is in progress, no data.
-  const factory Loadable.loading() = Loading<T>;
+  const factory Loadable.loading() = Loading;
 
   /// Loading failed, no data.
-  const factory Loadable.failed() = Failed<T>;
+  const factory Loadable.failed(F failure) = Failed;
 
   /// [data] is loaded successfully.
-  const factory Loadable.success(T data) = Success<T>;
+  const factory Loadable.success(S data) = Success;
 
   /// If loading is done (either successfully or not).
   bool get isLoaded;
@@ -34,52 +33,28 @@ abstract class Loadable<T> extends Equatable
   ///
   /// Throws [ArgumentError], if [f] is null.
   @override
-  Loadable<R> map<R>(R Function(T) f);
+  Loadable<F, R> map<R>(R Function(S data) f);
 
   /// If [Success] - returns `f(data)`.
   /// Otherwise, returns the same object.
   ///
   /// Throws [ArgumentError], if [f] is null.
   @override
-  Loadable<R> bind<R>(Loadable<R> Function(T) f);
-
-  /// If [Success] - returns the same object.
-  /// Otherwise, returns [another].
-  @override
-  Loadable<T> or(Loadable<T> another);
-
-  /// If left argument is [Success] - returns left argument.
-  /// Otherwise, returns right argument.
-  @override
-  Loadable<T> operator |(Loadable<T> another) => or(another);
-
-  /// If [Success] and [predicate] with [Success.data] evaluates to true -
-  /// returns the same object.
-  /// Otherwise, returns [Failed].
-  @override
-  Loadable<T> guard(bool Function(T) predicate);
+  Loadable<F, R> bind<R>(Loadable<F, R> Function(S data) f);
 
   /// Branches the execution.
   R branch<R>({
     @required R Function() ifLoading,
-    @required R Function() ifFailed,
-    @required R Function(T) ifSuccess,
+    @required R Function(F failure) ifFailed,
+    @required R Function(S data) ifSuccess,
   });
 
   @override
   bool get stringify => true;
-
-  // I don't know what is that,
-  // probably a bug because of some sort of type system optimizations.
-  // If there is no static method on this class, constant factory constructors
-  // become broken. It seems like it can infer the correct type of variable
-  // you are assigning to, but considers a type of assignable value to be wrong.
-  // ignore: unused_element
-  static void _useless() {}
 }
 
 /// Loading is in progress, no data.
-class Loading<T> extends Loadable<T> {
+class Loading<F, S> extends Loadable<F, S> {
   /// Loading is in progress, no data.
   const Loading() : super._();
 
@@ -90,31 +65,23 @@ class Loading<T> extends Loadable<T> {
   bool get isLoading => true;
 
   @override
-  Loadable<R> map<R>(R Function(T) f) {
+  Loadable<F, R> map<R>(R Function(S) f) {
     ArgumentError.checkNotNull(f, 'f');
-    return Loading<R>();
+    return Loading<F, R>();
   }
 
   @override
-  Loadable<R> bind<R>(Loadable<R> Function(T) f) {
+  Loadable<F, R> bind<R>(Loadable<F, R> Function(S) f) {
     ArgumentError.checkNotNull(f, 'f');
-    return Loading<R>();
-  }
-
-  @override
-  Loadable<T> or(Loadable<T> another) => another;
-
-  @override
-  Loadable<T> guard(bool Function(T) predicate) {
-    ArgumentError.checkNotNull(predicate, 'predicate');
-    return Failed<T>();
+    // ignore: prefer_const_constructors
+    return Loading();
   }
 
   @override
   R branch<R>({
     R Function() ifLoading,
-    R Function() ifFailed,
-    R Function(T p1) ifSuccess,
+    R Function(F failure) ifFailed,
+    R Function(S data) ifSuccess,
   }) {
     ArgumentError.checkNotNull(ifLoading, 'ifLoading');
     ArgumentError.checkNotNull(ifFailed, 'ifFailed');
@@ -131,28 +98,28 @@ class Loading<T> extends Loadable<T> {
 
 /// [Loadable] when loading is done
 /// (either successfully ([Success]) or not ([Failed])).
-abstract class Loaded<T> extends Loadable<T> {
+abstract class Loaded<F, S> extends Loadable<F, S> {
   const Loaded._() : super._();
 
   /// Loading failed, no data.
-  const factory Loaded.failed() = Failed;
+  const factory Loaded.failed(F failure) = Failed;
 
   /// [data] is loaded successfully.
-  const factory Loaded.success(T data) = Success;
+  const factory Loaded.success(S data) = Success;
 
   /// Creates [Loaded] from [Option]:
-  /// * [Some] -> [Success]
-  /// * [None] -> [Failed]
-  factory Loaded.fromOption(Option<T> option) => option.option(
-        () => Failed<T>(),
+  /// * [Some] -> [Success] with [Some.value].
+  /// * [None] -> [Failed] with [errorData]
+  factory Loaded.fromOption(Option<S> option, F errorData) => option.option(
+        () => Failed(errorData),
         (data) => Success(data),
       );
 
   /// Creates [Loaded] from [Either]:
   /// * [Right] -> [Success]
   /// * [Left]  -> [Failed]
-  factory Loaded.fromEither(Either<dynamic, T> either) => either.fromRight(
-        Failed<T>(),
+  factory Loaded.fromEither(Either<F, S> either) => either.either(
+        (left) => Failed(left),
         (right) => Success(right),
       );
 
@@ -166,43 +133,38 @@ abstract class Loaded<T> extends Loadable<T> {
 }
 
 /// [Loadable] when loading failed, no data.
-class Failed<T> extends Loaded<T> {
+class Failed<F, S> extends Loaded<F, S> {
   /// [Loadable] when loading failed, no data.
-  const Failed() : super._();
+  const Failed(this.failure) : super._();
+
+  /// Generally, describes why loading has failed (or anything you want).
+  final F failure;
 
   @override
   bool get isSuccess => false;
 
   @override
-  Loadable<R> map<R>(R Function(T) f) {
+  Loadable<F, R> map<R>(R Function(S) f) {
     ArgumentError.checkNotNull(f, 'f');
-    return Failed<R>();
+    return Failed(failure);
   }
 
   @override
-  Loadable<R> bind<R>(Loadable<R> Function(T) f) {
+  Loadable<F, R> bind<R>(Loadable<F, R> Function(S) f) {
     ArgumentError.checkNotNull(f, 'f');
-    return Failed<R>();
-  }
-
-  @override
-  Loadable<T> or(Loadable<T> another) => another;
-  @override
-  Loadable<T> guard(bool Function(T) predicate) {
-    ArgumentError.checkNotNull(predicate, 'predicate');
-    return this;
+    return Failed(failure);
   }
 
   @override
   R branch<R>({
     R Function() ifLoading,
-    R Function() ifFailed,
-    R Function(T p1) ifSuccess,
+    R Function(F failure) ifFailed,
+    R Function(S data) ifSuccess,
   }) {
     ArgumentError.checkNotNull(ifLoading, 'ifLoading');
     ArgumentError.checkNotNull(ifFailed, 'ifFailed');
     ArgumentError.checkNotNull(ifSuccess, 'ifSuccess');
-    return ifFailed();
+    return ifFailed(failure);
   }
 
   @override
@@ -213,42 +175,33 @@ class Failed<T> extends Loaded<T> {
 }
 
 /// [Loadable] when [data] is loaded successfully.
-class Success<T> extends Loaded<T> {
+class Success<F, S> extends Loaded<F, S> {
   /// [Loadable] when [data] is loaded successfully.
   const Success(this.data) : super._();
 
   /// Loaded data.
-  final T data;
+  final S data;
 
   @override
   bool get isSuccess => true;
 
   @override
-  Loadable<R> map<R>(R Function(T) f) {
+  Loadable<F, R> map<R>(R Function(S) f) {
     ArgumentError.checkNotNull(f, 'f');
     return Success(f(data));
   }
 
   @override
-  Loadable<R> bind<R>(Loadable<R> Function(T) f) {
+  Loadable<F, R> bind<R>(Loadable<F, R> Function(S) f) {
     ArgumentError.checkNotNull(f, 'f');
     return f(data);
   }
 
   @override
-  Loadable<T> or(Loadable<T> another) => this;
-
-  @override
-  Loadable<T> guard(bool Function(T) predicate) {
-    ArgumentError.checkNotNull(predicate, 'predicate');
-    return predicate(data) ? this : Failed<T>();
-  }
-
-  @override
   R branch<R>({
     R Function() ifLoading,
-    R Function() ifFailed,
-    R Function(T p1) ifSuccess,
+    R Function(F failure) ifFailed,
+    R Function(S data) ifSuccess,
   }) {
     ArgumentError.checkNotNull(ifLoading, 'ifLoading');
     ArgumentError.checkNotNull(ifFailed, 'ifFailed');

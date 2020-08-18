@@ -3,9 +3,10 @@ import 'package:test/test.dart';
 
 void main() {
   const data = 'test data';
-  const loading = Loadable<String>.loading();
-  const failed = Loadable<String>.failed();
-  const success = Loadable.success(data);
+  const failure = 7;
+  final loading = const Loadable<int, String>.loading();
+  final failed = const Loadable<int, String>.failed(failure);
+  final success = const Loadable<int, String>.success(data);
 
   group('*isLoaded* if', () {
     test('Loading, returns false', () {
@@ -36,7 +37,7 @@ void main() {
       test('applies [f] to data and returns it in Success', () {
         final f = (String s) => s.split(' ').first.length;
         final mappedSuccess = success.map(f);
-        expect(mappedSuccess, Success(f(data)));
+        expect(mappedSuccess, Success<int, int>(f(data)));
       });
       test('and [f] is null throws ArgumentError', () {
         expect(() => success.map<bool>(null), throwsArgumentError);
@@ -47,7 +48,7 @@ void main() {
       test('returns Failed', () {
         final f = (String s) => s.split(' ').first.length;
         final mappedFailed = failed.map(f);
-        expect(mappedFailed, const Failed<int>());
+        expect(mappedFailed, const Failed<int, int>(failure));
       });
       test('and [f] is null throws ArgumentError', () {
         expect(() => failed.map<bool>(null), throwsArgumentError);
@@ -58,7 +59,7 @@ void main() {
       test('returns Loading', () {
         final f = (String s) => s.split(' ').first.length;
         final mappedLoading = loading.map(f);
-        expect(mappedLoading, const Loading<int>());
+        expect(mappedLoading, const Loading<int, int>());
       });
       test('and [f] is null throws ArgumentError', () {
         expect(() => loading.map<bool>(null), throwsArgumentError);
@@ -69,8 +70,9 @@ void main() {
   group('*bind* if', () {
     group('Success', () {
       test('applies [f] to data', () {
-        final f =
-            (String s) => s.isNotEmpty ? Success(s) : const Failed<String>();
+        final f = (String s) => s.isNotEmpty
+            ? Success<int, String>(s)
+            : const Failed<int, String>(17);
         final bindedSuccess = success.bind(f);
         expect(bindedSuccess, f(data));
       });
@@ -81,9 +83,9 @@ void main() {
 
     group('Failed', () {
       test('returns Failed', () {
-        final f = (String s) => Success(s.length / 2);
+        final f = (String s) => Success<int, double>(s.length / 2);
         final bindedFailed = failed.bind(f);
-        expect(bindedFailed, const Failed<double>());
+        expect(bindedFailed, const Failed<int, double>(failure));
       });
       test('and [f] is null throws ArgumentError', () {
         expect(() => failed.bind<bool>(null), throwsArgumentError);
@@ -92,103 +94,13 @@ void main() {
 
     group('Loading', () {
       test('returns Loading', () {
-        final f = (String s) => Success(s.length / 2);
+        final f = (String s) => Success<int, double>(s.length / 2);
         final bindedLoading = loading.bind(f);
-        expect(bindedLoading, const Loading<double>());
+        expect(bindedLoading, const Loading<int, double>());
       });
 
       test('and [f] is null throws ArgumentError', () {
         expect(() => loading.bind<bool>(null), throwsArgumentError);
-      });
-    });
-  });
-
-  group('*or* if', () {
-    group('Success', () {
-      test('returns self', () {
-        const another = Loadable.success('boop');
-        expect(success.or(another), success);
-      });
-    });
-
-    group('Failed', () {
-      test('returns [another]', () {
-        const another = Loadable.success('boop');
-        expect(failed.or(another), another);
-      });
-    });
-
-    group('Loading', () {
-      test('returns [another]', () {
-        const another = Loadable.success('boop');
-        expect(loading.or(another), another);
-      });
-    });
-  });
-
-  group('*|*', () {
-    group('Success', () {
-      test('returns self', () {
-        const another = Loadable.success('boop');
-        expect(success | another, success);
-      });
-    });
-
-    group('Failed', () {
-      test('returns [another]', () {
-        const another = Loadable.success('boop');
-        expect(failed | another, another);
-      });
-    });
-
-    group('Loading', () {
-      test('returns [another]', () {
-        const another = Loadable.success('boop');
-        expect(loading | another, another);
-      });
-    });
-  });
-
-  group('*guard* if', () {
-    group('Success and predicate is', () {
-      test('true returns self', () {
-        expect(success.guard((_) => true), success);
-      });
-
-      test('false returns Failed', () {
-        expect(success.guard((_) => false), failed);
-      });
-
-      test('null throws ArgumentError', () {
-        expect(() => success.guard(null), throwsArgumentError);
-      });
-    });
-
-    group('Failed and predicate is', () {
-      test('true returns self', () {
-        expect(failed.guard((_) => true), failed);
-      });
-
-      test('false returns self', () {
-        expect(failed.guard((_) => false), failed);
-      });
-
-      test('null throws ArgumentError', () {
-        expect(() => failed.guard(null), throwsArgumentError);
-      });
-    });
-
-    group('Loading and predicate is', () {
-      test('true returns Failed', () {
-        expect(loading.guard((_) => true), failed);
-      });
-
-      test('false returns Failed', () {
-        expect(loading.guard((_) => false), failed);
-      });
-
-      test('null throws ArgumentError', () {
-        expect(() => loading.guard(null), throwsArgumentError);
       });
     });
   });
@@ -198,7 +110,7 @@ void main() {
       test('applies [ifSuccess] to data', () {
         final result = success.branch<int>(
           ifSuccess: (s) => s.length,
-          ifFailed: () => 7,
+          ifFailed: (f) => f,
           ifLoading: () => 17,
         );
         expect(result, data.length);
@@ -208,7 +120,7 @@ void main() {
         expect(
             () => success.branch<int>(
                   ifSuccess: null,
-                  ifFailed: () => 7,
+                  ifFailed: (f) => f,
                   ifLoading: () => 17,
                 ),
             throwsArgumentError);
@@ -226,7 +138,7 @@ void main() {
         expect(
             () => success.branch<int>(
                   ifSuccess: (s) => s.length,
-                  ifFailed: () => 7,
+                  ifFailed: (f) => f,
                   ifLoading: null,
                 ),
             throwsArgumentError);
@@ -234,20 +146,20 @@ void main() {
     });
 
     group('Failed', () {
-      test('calls [ifFailed]', () {
+      test('applies [ifFailed] to failure', () {
         final result = failed.branch<int>(
           ifSuccess: (s) => s.length,
-          ifFailed: () => 7,
+          ifFailed: (f) => f * 3,
           ifLoading: () => 17,
         );
-        expect(result, 7);
+        expect(result, failure * 3);
       });
 
       test('and [ifSuccess] is null throws ArgumentError', () {
         expect(
             () => failed.branch<int>(
                   ifSuccess: null,
-                  ifFailed: () => 7,
+                  ifFailed: (f) => f,
                   ifLoading: () => 17,
                 ),
             throwsArgumentError);
@@ -265,7 +177,7 @@ void main() {
         expect(
             () => failed.branch<int>(
                   ifSuccess: (s) => s.length,
-                  ifFailed: () => 7,
+                  ifFailed: (f) => f,
                   ifLoading: null,
                 ),
             throwsArgumentError);
@@ -275,7 +187,7 @@ void main() {
       test('calls [ifLoading]', () {
         final result = loading.branch<int>(
           ifSuccess: (s) => s.length,
-          ifFailed: () => 7,
+          ifFailed: (f) => f,
           ifLoading: () => 17,
         );
         expect(result, 17);
@@ -285,7 +197,7 @@ void main() {
         expect(
             () => loading.branch<int>(
                   ifSuccess: null,
-                  ifFailed: () => 7,
+                  ifFailed: (f) => f,
                   ifLoading: () => 17,
                 ),
             throwsArgumentError);
@@ -303,7 +215,7 @@ void main() {
         expect(
             () => loading.branch<int>(
                   ifSuccess: (s) => s.length,
-                  ifFailed: () => 7,
+                  ifFailed: (f) => f,
                   ifLoading: null,
                 ),
             throwsArgumentError);

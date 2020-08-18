@@ -65,30 +65,30 @@ void main() {
   group('FutureLoadableTransformerExtension:', () {
     group('*map*', () {
       test('performs map on inner Loadable', () async {
-        const loadable = const Loadable.success(7);
+        const loadable = const Success<String, int>(7);
         final f = (num x) => x * 2;
-        final toFuture = (Loadable<num> x) => Future.value(x);
+        final toFuture = (Loadable<String, num> x) => Future.value(x);
         expect(
             await toFuture(loadable).map(f), await toFuture(loadable.map(f)));
       });
 
       test('if [f] is null throws ArgumentError', () {
-        final future = Future.value(const Success<int>(7));
+        final future = Future.value(const Success<String, int>(7));
         expect(() => future.map<bool>(null), throwsArgumentError);
       });
     });
 
     group('*bind*', () {
       test('performs bind on inner Loadable', () async {
-        const loadable = const Loadable.success(7);
-        final f = (num x) => const Loadable<int>.failed();
-        final toFuture = (Loadable<int> x) => Future.value(x);
+        const loadable = const Success<String, int>(7);
+        final f = (num x) => const Failed<String, int>('boop');
+        final toFuture = (Loadable<String, int> x) => Future.value(x);
         expect(
             await toFuture(loadable).bind(f), await toFuture(loadable.bind(f)));
       });
 
       test('if [f] is null throws ArgumentError', () {
-        final future = Future.value(const Success<int>(7));
+        final future = Future.value(const Success<String, int>(7));
         expect(() => future.bind<bool>(null), throwsArgumentError);
       });
     });
