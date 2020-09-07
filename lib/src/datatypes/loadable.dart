@@ -52,6 +52,10 @@ abstract class Loadable<F, S> extends Equatable implements Monad<S> {
     @required R Function(S data) ifSuccess,
   });
 
+  /// If [Success] returns [Success.data].
+  /// Otherwise, returns [ifNotSuccess].
+  S dataOr(S ifNotSuccess);
+
   @override
   bool get stringify => true;
 }
@@ -100,6 +104,9 @@ class Loading<F, S> extends Loadable<F, S> {
 
   @override
   String toString() => 'Loading';
+
+  @override
+  S dataOr(S ifNotSuccess) => ifNotSuccess;
 }
 
 /// [Loadable] when loading is done
@@ -175,6 +182,9 @@ class Failed<F, S> extends Loaded<F, S> {
 
   @override
   String toString() => 'Failed';
+
+  @override
+  S dataOr(S ifNotSuccess) => ifNotSuccess;
 }
 
 /// [Loadable] when [data] is loaded successfully.
@@ -217,4 +227,7 @@ class Success<F, S> extends Loaded<F, S> {
 
   @override
   String toString() => 'Success($data)';
+
+  @override
+  S dataOr(S ifNotSuccess) => data;
 }

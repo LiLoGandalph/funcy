@@ -234,4 +234,21 @@ void main() {
       });
     });
   });
+
+  group('*dataOr* if', () {
+    test('Loading returns [ifNotSuccess]', () {
+      const notSuccess = 'not success';
+      expect(loading.dataOr(notSuccess), notSuccess);
+    });
+
+    test('Failed retursn [ifNotSuccess]', () {
+      const notSuccess = 'not success';
+      expect(failed.dataOr(notSuccess), notSuccess);
+    });
+
+    test('Success retursn [Success.data]', () {
+      const notSuccess = 'not success';
+      expect(success.dataOr(notSuccess), data);
+    });
+  });
 }
