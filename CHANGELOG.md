@@ -1,3 +1,7 @@
+## 2.1.0
+
+- Add [Loadable.isSuccess] and [Loadable.dataOr].
+
 ## 2.0.1
 
 - Fix bug with [JsonOptionExtension.tryGet] when called with [dynamic] 
