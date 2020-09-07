@@ -25,6 +25,9 @@ abstract class Loadable<F, S> extends Equatable implements Monad<S> {
   /// If loading is done (either successfully or not).
   bool get isLoaded;
 
+  /// If loading is done successfully.
+  bool get isSuccess;
+
   /// If loading is in progress.
   bool get isLoading;
 
@@ -60,6 +63,9 @@ class Loading<F, S> extends Loadable<F, S> {
 
   @override
   bool get isLoaded => false;
+
+  @override
+  bool get isSuccess => false;
 
   @override
   bool get isLoading => true;
@@ -127,9 +133,6 @@ abstract class Loaded<F, S> extends Loadable<F, S> {
   bool get isLoaded => true;
   @override
   bool get isLoading => false;
-
-  /// If data is loaded successfully ([Success]).
-  bool get isSuccess;
 }
 
 /// [Loadable] when loading failed, no data.

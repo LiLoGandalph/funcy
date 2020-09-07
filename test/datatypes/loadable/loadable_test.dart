@@ -20,6 +20,18 @@ void main() {
     });
   });
 
+  group('*isSuccess* if', () {
+    test('Loading, returns false', () {
+      expect(loading.isSuccess, isFalse);
+    });
+    test('Failed, returns false', () {
+      expect(failed.isSuccess, isFalse);
+    });
+    test('Success, returns true', () {
+      expect(success.isSuccess, isTrue);
+    });
+  });
+
   group('*isLoading* if', () {
     test('Loading, returns true', () {
       expect(loading.isLoading, isTrue);
