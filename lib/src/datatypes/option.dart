@@ -360,7 +360,9 @@ extension JsonOptionExtension on Map<String, dynamic> {
   /// ```
   Option<T> tryGet<T>(String key) {
     final dynamic value = this[key];
-    if (value is T) {
+    // Checking for null in case of [T] being [dynamic],
+    // in which case `null is dynamic` evaluates to `true`.
+    if (value is T && value != null) {
       return Some(value);
     } else {
       // ignore: prefer_const_constructors

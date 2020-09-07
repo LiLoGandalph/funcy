@@ -64,6 +64,7 @@ void main() {
 
         test('value associated to [key] is null', () {
           expect(json.tryGet<int>('real null'), const None<int>());
+          expect(json.tryGet<dynamic>('real null'), const None<dynamic>());
         });
 
         test('value associated to [key] is not of type [T]', () {

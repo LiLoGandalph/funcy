@@ -1,3 +1,8 @@
+## 2.0.1
+
+- Fix bug with [JsonOptionExtension.tryGet] when called with [dynamic] 
+as a type parameter it returned [Some] even when there where no proper value.
+
 ## 2.0.0
 
 - Added [Failed.failure] field - you very often need a reason of failure.
