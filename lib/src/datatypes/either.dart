@@ -90,7 +90,7 @@ abstract class Either<L, R> extends Equatable implements Monad<R> {
   ///
   /// If [f] is null - throws [ArgumentError].
   @override
-  Either<L, T> map<T>(T Function(R) f);
+  Either<L, T> map<T>(T Function(R value) f);
 
   /// Monad bind.
   ///
@@ -107,7 +107,7 @@ abstract class Either<L, R> extends Equatable implements Monad<R> {
   ///
   /// If [f] is null - throws [ArgumentError].
   @override
-  Either<L, T> bind<T>(Either<L, T> Function(R) f);
+  Either<L, T> bind<T>(Either<L, T> Function(R value) f);
 
   /// Branches execution:
   ///

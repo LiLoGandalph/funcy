@@ -101,7 +101,7 @@ abstract class Option<T> extends Equatable implements Monad<T>, Alternative<T> {
   ///
   /// If [f] is null - throws [ArgumentError].
   @override
-  Option<R> map<R>(R Function(T) f);
+  Option<R> map<R>(R Function(T value) f);
 
   /// Monad bind.
   ///
@@ -117,7 +117,7 @@ abstract class Option<T> extends Equatable implements Monad<T>, Alternative<T> {
   ///
   /// If [f] is null - throws [ArgumentError].
   @override
-  Option<R> bind<R>(Option<R> Function(T) f);
+  Option<R> bind<R>(Option<R> Function(T value) f);
 
   /// Alternative choice.
   ///

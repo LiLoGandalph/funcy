@@ -5,7 +5,7 @@
 /// Basically, a box with magic sauce.
 abstract class Functor<T> {
   /// Functor map.
-  Functor<R> map<R>(R Function(T) f);
+  Functor<R> map<R>(R Function(T value) f);
 }
 
 /// Monad typeclass.
@@ -16,7 +16,7 @@ abstract class Functor<T> {
 /// that can be combined with other such boxes.
 abstract class Monad<T> extends Functor<T> {
   /// Monad bind.
-  Monad<R> bind<R>(covariant Monad<R> Function(T) f);
+  Monad<R> bind<R>(covariant Monad<R> Function(T value) f);
 }
 
 /// Alternative typeclass.
@@ -38,5 +38,5 @@ abstract class Alternative<T> extends Functor<T> {
 
   /// Alternative guard. If predicate returns false,
   /// returns a value representing *failure*.
-  Alternative<T> guard(bool Function(T) predicate);
+  Alternative<T> guard(bool Function(T value) predicate);
 }
