@@ -20,9 +20,10 @@ void main() {
     group('*bind*', () {
       test('performs bind on inner Option', () async {
         final option = Option.fromNullable(7);
-        final f = (num x) => Some(x * 2);
         final toFuture = (Option<num> x) => Future.value(x);
-        expect(await toFuture(option).bind(f), await toFuture(option.bind(f)));
+        final f = (num x) => Some(x * 2);
+        final actual = await toFuture(option).bind(f.then(toFuture));
+        expect(actual, option.bind(f));
       });
 
       test('if [f] is null throws ArgumentError', () {
@@ -49,10 +50,11 @@ void main() {
 
     group('*bind*', () {
       test('performs bind on inner Either', () async {
-        const either = const Right<String, int>(7);
         final f = (num x) => Left<String, int>(x.toString());
         final toFuture = (Either<String, int> x) => Future.value(x);
-        expect(await toFuture(either).bind(f), await toFuture(either.bind(f)));
+        const either = const Right<String, int>(7);
+        final actual = await toFuture(either).bind(f.then(toFuture));
+        expect(actual, either.bind(f));
       });
 
       test('if [f] is null throws ArgumentError', () {
@@ -83,8 +85,8 @@ void main() {
         const loadable = const Success<String, int>(7);
         final f = (num x) => const Failed<String, int>('boop');
         final toFuture = (Loadable<String, int> x) => Future.value(x);
-        expect(
-            await toFuture(loadable).bind(f), await toFuture(loadable.bind(f)));
+        final actual = await toFuture(loadable).bind(f.then(toFuture));
+        expect(actual, loadable.bind(f));
       });
 
       test('if [f] is null throws ArgumentError', () {
