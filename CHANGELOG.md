@@ -1,3 +1,9 @@
+## 3.0.0
+
+- Make [Future] transformer extensions actually useful.
+
+- Add methods and extensions for easy conversion between datatypes.
+
 ## 2.1.0
 
 - Add [Loadable.isSuccess] and [Loadable.dataOr].
