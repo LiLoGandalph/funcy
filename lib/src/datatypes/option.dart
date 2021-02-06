@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 
 import '../typeclasses/functor.dart';
 import 'either.dart';
+import 'loadable.dart';
 
 // NOTICE
 // Constant constructors return values with dynamic parameter types
@@ -19,20 +20,56 @@ import 'either.dart';
 abstract class Option<T> extends Equatable implements Monad<T>, Alternative<T> {
   const Option._();
 
+  /// Same as [Some(value)].
+  ///
+  /// Better use [Option.fromNullable] if [value] can be null.
+  static Option<T> some<T>(T value) => Some(value);
+
+  /// Same as [None()].
+  // ignore: prefer_const_constructors
+  static Option<T> none<T>() => None();
+
   /// Creates [Some] if [nullableValue] is not `null`, creates [None] otherwise.
-  factory Option.fromNullable(T nullableValue) =>
+  static Option<T> fromNullable<T>(T nullableValue) =>
       // ignore: prefer_const_constructors
       nullableValue == null ? None() : Some(nullableValue);
 
   /// Creates [Some] if [either] is [Right], creates [None] otherwise.
-  // ignore: prefer_constructors_over_static_methods
   static Option<R> fromEither<L, R>(Either<L, R> either) =>
       Option.fromNullable(either.rightOr(null));
 
   /// Creates [Some] if [either] is [Left], creates [None] otherwise.
-  // ignore: prefer_constructors_over_static_methods
   static Option<L> fromLeftEither<L, R>(Either<L, R> either) =>
       Option.fromNullable(either.leftOr(null));
+
+  /// Creates [Option] from [Loaded].
+  ///
+  /// - [Failed] -> [None]
+  /// - [Success(value)] -> [Some(value)]
+  static Option<S> fromLoaded<F, S>(Loaded<F, S> loaded) {
+    return loaded.branchLoaded(
+      // ignore: prefer_const_constructors
+      ifFailed: (_) => None(),
+      ifSuccess: Option.some,
+    );
+  }
+
+  /// Creates [Option] from [Loadable].
+  ///
+  /// - [Loading] -> [ifLoading()]
+  /// - [Failed] -> [None]
+  /// - [Success(value)] -> [Some(value)]
+  static Option<S> fromLoadable<F, S>(
+    Loadable<F, S> loadable, {
+    @required Option<S> Function() ifLoading,
+  }) {
+    return loadable.branch(
+      ifLoading: ifLoading,
+      // ignore: prefer_const_constructors
+      ifFailed: (_) => None(),
+      ifSuccess: Option.some,
+    );
+  }
 
   @override
   bool get stringify => true;
@@ -397,4 +434,23 @@ extension StringOptionExtension on String {
     ArgumentError.checkNotNull(this);
     return Option.fromNullable(double.tryParse(this));
   }
+}
+
+/// Method for converting [Either] to [Option].
+extension EitherToOption<L, R> on Either<L, R> {
+  /// Extension method using [Option.fromEither].
+  Option<R> toOption() => Option.fromEither(this);
+}
+
+/// Method for converting [Loaded] to [Option].
+extension LoadedToOption<L, R> on Loaded<L, R> {
+  /// Extension method using [Option.fromLoaded].
+  Option<R> toOption() => Option.fromLoaded(this);
+}
+
+/// Method for converting [Loadable] to [Option].
+extension LoadableToOption<L, R> on Loadable<L, R> {
+  /// Extension method using [Option.fromLoadable].
+  Option<R> toOption({@required Option<R> Function() ifLoading}) =>
+      Option.fromLoadable(this, ifLoading: ifLoading);
 }

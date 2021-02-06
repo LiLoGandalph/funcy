@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 void main() {
   const value = 7;
   final some = Option.fromNullable(value);
-  final none = Option<int>.fromNullable(null);
+  final none = Option.fromNullable<int>(null);
 
   group('*equality*', () {
     group('is true for', () {
@@ -28,7 +28,7 @@ void main() {
 
       test('None and Option that is None', () {
         const none = const None<int>();
-        final option = Option<int>.fromNullable(null);
+        final option = Option.fromNullable<int>(null);
         expect(none == option, isTrue);
       });
     });
@@ -36,7 +36,7 @@ void main() {
     group('is false for', () {
       test('Options that are Some and None', () {
         final some = Option.fromNullable(7);
-        final none = Option<int>.fromNullable(null);
+        final none = Option.fromNullable<int>(null);
         expect(some == none, isFalse);
       });
     });
@@ -51,7 +51,7 @@ void main() {
       });
 
       test('null returns None', () {
-        expect(Option<int>.fromNullable(null), const None<int>());
+        expect(Option.fromNullable<int>(null), const None<int>());
       });
     });
   });
@@ -60,14 +60,14 @@ void main() {
     group('if [either] is', () {
       test('Right returns Some with right value', () {
         const value = 'seven';
-        final right = Either<int, String>.right(value);
+        final right = Either.right<int, String>(value);
         final some = Option.fromEither(right);
         expect(some, const Some(value));
       });
 
       test('Left returns None', () {
         const value = 7;
-        final left = Either<int, String>.left(value);
+        final left = Either.left<int, String>(value);
         expect(Option.fromEither(left), const None<String>());
       });
     });
@@ -77,14 +77,14 @@ void main() {
     group('if [either] is', () {
       test('Left returns Some with left value', () {
         const value = 7;
-        final left = Either<int, String>.left(value);
+        final left = Either.left<int, String>(value);
         final some = Option.fromLeftEither(left);
         expect(some, const Some(value));
       });
 
       test('Right returns None', () {
         const value = 'seven';
-        final right = Either<int, String>.right(value);
+        final right = Either.right<int, String>(value);
         expect(Option.fromLeftEither(right), const None<int>());
       });
     });
@@ -331,7 +331,7 @@ void main() {
       });
 
       test('if is None returns None', () {
-        final none = Option<Option<int>>.fromNullable(null);
+        final none = Option.fromNullable<Option<int>>(null);
         expect(none.join(), const None<int>());
       });
     });
