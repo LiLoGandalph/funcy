@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 
 import '../typeclasses/functor.dart';
+import 'loadable.dart';
 import 'option.dart';
 
 // NOTICE
@@ -18,12 +19,59 @@ abstract class Either<L, R> extends Equatable implements Monad<R> {
   /// Right value of [Either].
   ///
   /// Same as [Right(right)].
-  factory Either.right(R right) => Right(right);
+  static Either<L, R> right<L, R>(R right) => Right(right);
 
   /// Left value of [Either].
   ///
   /// Same as [Left(left)].
-  factory Either.left(L left) => Left(left);
+  static Either<L, R> left<L, R>(L left) => Left(left);
+
+  /// Creates [Either] from [Option].
+  ///
+  /// * If [optionalRight] is Some(right) - returns Right(right).
+  /// * If [optionalRight] is None() - returns Left([left]).
+  static Either<L, R> fromOption<L, R>(Option<R> optionalRight, L left) {
+    ArgumentError.checkNotNull(optionalRight, 'optionalRight');
+    return optionalRight.option(
+      () => Either.left(left),
+      Either.right,
+    );
+  }
+
+  /// Creates [Either] from [Loaded]:
+  /// * [Success] -> [Right]
+  /// * [Failed] -> [Left]
+  static Either<L, R> fromLoaded<L, R>(Loaded<L, R> loaded) {
+    ArgumentError.checkNotNull(loaded, 'loaded');
+    return loaded.branchLoaded(
+      ifFailed: Either.left,
+      ifSuccess: Either.right,
+    );
+  }
+
+  /// Creates [Either] from [Loadable]:
+  /// * [Success] -> [Right]
+  /// * [Failed] -> [Left]
+  /// * [Loading] -> [ifLoading]
+  static Either<L, R> fromLoadable<L, R>(
+    Loadable<L, R> loadable, {
+    @required Either<L, R> Function() ifLoading,
+  }) {
+    ArgumentError.checkNotNull(ifLoading, 'ifLoading');
+    if (loadable is Loaded<L, R>) {
+      return Either.fromLoaded(loadable);
+    } else {
+      return ifLoading();
+    }
+  }
+
+  /// Turns [Left] into [Right] and [Right] into [Left].
+  Either<R, L> mirrored() {
+    return either(
+      (left) => Right(left),
+      (right) => Left(right),
+    );
+  }
 
   @override
   bool get stringify => true;
@@ -146,12 +194,6 @@ abstract class Either<L, R> extends Equatable implements Monad<R> {
   /// If is [Left] - returns value. Otherwise returns [ifRight].
   L leftOr(L ifRight);
 
-  /// If is [Right] - returns [Some] with value. Otherwise returns [None].
-  Option<R> toOption();
-
-  /// If is [Left] - returns [Some] with value. Otherwise returns [None].
-  Option<L> toOptionLeft();
-
   L _unsafeLeft();
   R _unsafeRight();
 }
@@ -214,13 +256,6 @@ class Left<L, R> extends Either<L, R> {
 
   @override
   R rightOr(R ifLeft) => ifLeft;
-
-  @override
-  // ignore: prefer_const_constructors
-  Option<R> toOption() => None();
-
-  @override
-  Option<L> toOptionLeft() => Some(left);
 }
 
 /// Right value of [Either]. Conventionally represents 'success'.
@@ -281,13 +316,6 @@ class Right<L, R> extends Either<L, R> {
 
   @override
   R rightOr(R ifLeft) => right;
-
-  @override
-  Option<R> toOption() => Some(right);
-
-  @override
-  // ignore: prefer_const_constructors
-  Option<L> toOptionLeft() => None();
 }
 
 /// Type-safe monad join implementation.
@@ -317,4 +345,24 @@ extension IterableEitherExtension<L, R> on Iterable<Either<L, R>> {
   /// Leaves only [Left] values.
   Iterable<L> whereLefts() =>
       where((eith) => eith.isLeft).map((left) => left._unsafeLeft());
+}
+
+/// Method for converting [Option] into [Either].
+extension OptionToEitherExtension<L, R> on Option<R> {
+  /// Extension method using [Either.fromOption].
+  Either<L, R> toEither(L leftIfNone) => Either.fromOption(this, leftIfNone);
+}
+
+/// Method for converting [Loadable] into [Either].
+extension LoadableToEitherExtension<L, R> on Loadable<L, R> {
+  /// Extension method using [Either.fromLoadable].
+  Either<L, R> toEither({@required Either<L, R> Function() ifLoading}) {
+    return Either.fromLoadable(this, ifLoading: ifLoading);
+  }
+}
+
+/// Method for converting [Loaded] into [Either].
+extension LoadedToEitherExtension<L, R> on Loaded<L, R> {
+  /// Extension method using [Either.fromLoaded].
+  Either<L, R> toEither() => Either.fromLoaded(this);
 }

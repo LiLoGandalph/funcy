@@ -3,9 +3,119 @@ import 'package:test/test.dart';
 
 void main() {
   const rightValue = 7;
-  final right = Either<String, int>.right(rightValue);
+  final right = Either.right<String, int>(rightValue);
   const leftValue = 'seven';
-  final left = Either<String, int>.left(leftValue);
+  final left = Either.left<String, int>(leftValue);
+
+  group(
+    '*fromOption*',
+    () {
+      test(
+        'if [optionalRight] is Some(right) - returns Right(right)',
+        () {
+          const Option<int> someRight = Some(rightValue);
+          expect(Either.fromOption(someRight, leftValue), right);
+        },
+      );
+
+      test(
+        'if [optionalRight] is None() - returns Left([left])',
+        () {
+          const Option<int> noneRight = None();
+          expect(Either.fromOption(noneRight, leftValue), left);
+        },
+      );
+
+      test(
+        'if [optionalRight] is null - throws ArgumentError',
+        () {
+          const Option<int> nullOptionalRight = null;
+          expect(
+            () => Either.fromOption(nullOptionalRight, leftValue),
+            throwsArgumentError,
+          );
+        },
+      );
+    },
+  );
+
+  group(
+    '*fromLoaded*',
+    () {
+      test(
+        'if [loaded] is Failed(left) - returns Left(left)',
+        () {
+          const Loaded<String, int> failed = Failed(leftValue);
+          expect(Either.fromLoaded(failed), left);
+        },
+      );
+
+      test(
+        'if [loaded] is Success(right) - returns Right(right)',
+        () {
+          const Loaded<String, int> success = Success(rightValue);
+          expect(Either.fromLoaded(success), right);
+        },
+      );
+
+      test(
+        'if [loaded] is null - throws ArgumentError',
+        () {
+          const Loaded<String, int> nullLoaded = null;
+          expect(() => Either.fromLoaded(nullLoaded), throwsArgumentError);
+        },
+      );
+    },
+  );
+
+  group(
+    '*fromLoadable*',
+    () {
+      group(
+        'if [loadable] is',
+        () {
+          test(
+            'Failed(left) - returns Left(left)',
+            () {
+              const Loaded<String, int> failed = Failed(leftValue);
+              expect(Either.fromLoaded(failed), left);
+            },
+          );
+
+          test(
+            'Success(right) - returns Right(right)',
+            () {
+              const Loaded<String, int> success = Success(rightValue);
+              expect(Either.fromLoaded(success), right);
+            },
+          );
+
+          test(
+            'null - throws ArgumentError',
+            () {
+              const Loaded<String, int> nullLoaded = null;
+              expect(() => Either.fromLoaded(nullLoaded), throwsArgumentError);
+            },
+          );
+        },
+      );
+    },
+  );
+
+  group(
+    '*mirrored*',
+    () {
+      test(
+        'if Left(left) - returns Right(left)',
+        () {
+          expect(left.mirrored(), const Right<int, String>(leftValue));
+        },
+      );
+      test('if Right(right) - returns Left(right)', () {
+        expect(right.mirrored(), const Left<int, String>(rightValue));
+      });
+    },
+  );
 
   group('equality', () {
     group('is true for', () {
@@ -19,14 +129,14 @@ void main() {
       test('Right and Either that is Right with equal values', () {
         const value = 7;
         const right = const Right<String, int>(value);
-        final either = Either<String, int>.right(value);
+        final either = Either.right<String, int>(value);
         expect(right == either, isTrue);
       });
 
       test('Eithers that are Rights with equal values', () {
         const value = 7;
-        final either1 = Either<String, int>.right(value);
-        final either2 = Either<String, int>.right(value);
+        final either1 = Either.right<String, int>(value);
+        final either2 = Either.right<String, int>(value);
         expect(either1 == either2, isTrue);
       });
 
@@ -40,14 +150,14 @@ void main() {
       test('Left and Either that is Left with equal values', () {
         const value = 7;
         const left = const Left<int, String>(value);
-        final either = Either<int, String>.left(value);
+        final either = Either.left<int, String>(value);
         expect(left == either, isTrue);
       });
 
       test('Eithers that are Lefts with equal values', () {
         const value = 7;
-        final either1 = Either<int, String>.left(value);
-        final either2 = Either<int, String>.left(value);
+        final either1 = Either.left<int, String>(value);
+        final either2 = Either.left<int, String>(value);
         expect(either1 == either2, isTrue);
       });
     });
@@ -66,8 +176,8 @@ void main() {
       });
 
       test('Eithers that are Left and Right with any values', () {
-        final left = Either<int, int>.left(7);
-        final right = Either<int, int>.right(7);
+        final left = Either.left<int, int>(7);
+        final right = Either.right<int, int>(7);
         expect(left == right, isFalse);
       });
     });
@@ -126,7 +236,7 @@ void main() {
   group('*bind*', () {
     group('if Right', () {
       test('applies [f] to value', () {
-        final f = (int n) => Either<String, bool>.right(n > 0);
+        final f = (int n) => Either.right<String, bool>(n > 0);
         final result = right.bind(f);
         expect(result, f(rightValue));
       });
@@ -138,7 +248,7 @@ void main() {
 
     group('if Left', () {
       test('does not change Left value', () {
-        final f = (int n) => Either<String, double>.right(n / 2);
+        final f = (int n) => Either.right<String, double>(n / 2);
         final leftUpd = left.bind(f);
         expect(leftUpd, const Left<String, double>(leftValue));
       });
@@ -274,20 +384,6 @@ void main() {
     group('if Left', () {
       test('returns None', () {
         expect(left.toOption(), const None<int>());
-      });
-    });
-  });
-
-  group('*toOptionLeft*', () {
-    group('if Right', () {
-      test('returns None', () {
-        expect(right.toOptionLeft(), const None<String>());
-      });
-    });
-
-    group('if Left', () {
-      test('returns Some with value', () {
-        expect(left.toOptionLeft(), const Some(leftValue));
       });
     });
   });

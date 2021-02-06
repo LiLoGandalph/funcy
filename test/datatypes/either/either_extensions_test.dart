@@ -20,8 +20,8 @@ void main() {
   group('IterableEitherExtension:', () {
     final list = List.generate(10, identity);
     final f = (int n) => n.isOdd
-        ? Either<String, int>.right(n * n)
-        : Either<String, int>.left(n.toString());
+        ? Either.right<String, int>(n * n)
+        : Either.left<String, int>(n.toString());
 
     group('*whereRights*', () {
       test('Leaves only Right values', () {
