@@ -8,10 +8,10 @@ environment:
   sdk: '>=2.6.0 <3.0.0'
 
 dependencies:
- equatable: ^1.2.3
- meta: ^1.1.8
+  equatable: ^1.2.5
+  meta: ^1.2.4
 
 dev_dependencies:
   effective_dart:
   pedantic:
-  test: ^1.6.0
+  test: 
