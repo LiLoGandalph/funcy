@@ -12,6 +12,6 @@ dependencies:
  meta: ^1.1.8
 
 dev_dependencies:
-  pedantic:
   effective_dart:
+  pedantic:
   test: ^1.6.0
