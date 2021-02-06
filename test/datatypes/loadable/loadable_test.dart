@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 void main() {
   const data = 'test data';
   const failure = 7;
-  final loading = const Loadable<int, String>.loading();
-  final failed = const Loadable<int, String>.failed(failure);
-  final success = const Loadable<int, String>.success(data);
+  final loading = Loadable.loading<int, String>();
+  final failed = Loadable.failed<int, String>(failure);
+  final success = Loadable.success<int, String>(data);
 
   group('*isLoaded* if', () {
     test('Loading, returns false', () {
@@ -251,4 +251,132 @@ void main() {
       expect(success.dataOr(notSuccess), data);
     });
   });
+
+  group(
+    '"Loaded"',
+    () {
+      group(
+        '*branchLoaded*',
+        () {
+          group(
+            'if Failed',
+            () {
+              const failure = 'failure string';
+              const Loaded<String, int> failed = Failed(failure);
+
+              test(
+                'returns ifFailed(failure)',
+                () {
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final int Function(String) ifFailed = (s) => s.length;
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final int Function(int) ifSuccess = identity;
+                  expect(
+                    failed.branchLoaded(
+                      ifFailed: ifFailed,
+                      ifSuccess: ifSuccess,
+                    ),
+                    ifFailed(failure),
+                  );
+                },
+              );
+
+              test(
+                'and [ifFailed] is null throws ArgumentError',
+                () {
+                  // ignore: omit_local_variable_types, prefer_const_declarations
+                  final int Function(String) nullIfFailed = null;
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final int Function(int) ifSuccess = identity;
+                  expect(
+                    () => failed.branchLoaded(
+                      ifFailed: nullIfFailed,
+                      ifSuccess: ifSuccess,
+                    ),
+                    throwsArgumentError,
+                  );
+                },
+              );
+
+              test(
+                'and [ifSuccess] is null throws ArgumentError',
+                () {
+                  // ignore: omit_local_variable_types, prefer_const_declarations
+                  final int Function(String) ifFailed = (s) => s.length;
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final int Function(int) nullIfSuccess = null;
+                  expect(
+                    () => failed.branchLoaded(
+                      ifFailed: ifFailed,
+                      ifSuccess: nullIfSuccess,
+                    ),
+                    throwsArgumentError,
+                  );
+                },
+              );
+            },
+          );
+
+          group(
+            'if Success',
+            () {
+              const successValue = 11;
+              const Loaded<String, int> success = Success(successValue);
+
+              test(
+                'returns ifSuccess(success)',
+                () {
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final String Function(String) ifFailed = identity;
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final String Function(int) ifSuccess = (n) => n.toString();
+                  expect(
+                    success.branchLoaded(
+                      ifFailed: ifFailed,
+                      ifSuccess: ifSuccess,
+                    ),
+                    ifSuccess(successValue),
+                  );
+                },
+              );
+
+              test(
+                'and [ifFailed] is null throws ArgumentError',
+                () {
+                  // ignore: omit_local_variable_types, prefer_const_declarations
+                  final String Function(String) nullIfFailed = null;
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final String Function(int) ifSuccess = (n) => n.toString();
+                  expect(
+                    () => success.branchLoaded(
+                      ifFailed: nullIfFailed,
+                      ifSuccess: ifSuccess,
+                    ),
+                    throwsArgumentError,
+                  );
+                },
+              );
+
+              test(
+                'and [ifSuccess] is null throws ArgumentError',
+                () {
+                  // ignore: omit_local_variable_types, prefer_const_declarations
+                  final String Function(String) ifFailed = identity;
+                  // ignore: prefer_const_declarations, omit_local_variable_types
+                  final String Function(int) nullIfSuccess = null;
+                  expect(
+                    () => success.branchLoaded(
+                      ifFailed: ifFailed,
+                      ifSuccess: nullIfSuccess,
+                    ),
+                    throwsArgumentError,
+                  );
+                },
+              );
+            },
+          );
+        },
+      );
+    },
+  );
 }

@@ -14,13 +14,13 @@ abstract class Loadable<F, S> extends Equatable implements Monad<S> {
   const Loadable._();
 
   /// Loading is in progress, no data.
-  const factory Loadable.loading() = Loading;
+  static Loadable<F, S> loading<F, S>() => Loading<F, S>();
 
   /// Loading failed, no data.
-  const factory Loadable.failed(F failure) = Failed;
+  static Loadable<F, S> failed<F, S>(F failure) => Failed(failure);
 
   /// [data] is loaded successfully.
-  const factory Loadable.success(S data) = Success;
+  static Loadable<F, S> success<F, S>(S data) => Success(data);
 
   /// If loading is done (either successfully or not).
   bool get isLoaded;
@@ -89,9 +89,9 @@ class Loading<F, S> extends Loadable<F, S> {
 
   @override
   R branch<R>({
-    R Function() ifLoading,
-    R Function(F failure) ifFailed,
-    R Function(S data) ifSuccess,
+    @required R Function() ifLoading,
+    @required R Function(F failure) ifFailed,
+    @required R Function(S data) ifSuccess,
   }) {
     ArgumentError.checkNotNull(ifLoading, 'ifLoading');
     ArgumentError.checkNotNull(ifFailed, 'ifFailed');
@@ -115,31 +115,54 @@ abstract class Loaded<F, S> extends Loadable<F, S> {
   const Loaded._() : super._();
 
   /// Loading failed, no data.
-  const factory Loaded.failed(F failure) = Failed;
+  static Loaded<F, S> failed<F, S>(F failure) => Failed(failure);
 
   /// [data] is loaded successfully.
-  const factory Loaded.success(S data) = Success;
+  static Loaded<F, S> success<F, S>(S data) => Success(data);
 
   /// Creates [Loaded] from [Option]:
   /// * [Some] -> [Success] with [Some.value].
   /// * [None] -> [Failed] with [errorData]
-  factory Loaded.fromOption(Option<S> option, F errorData) => option.option(
-        () => Failed(errorData),
-        (data) => Success(data),
-      );
+  static Loaded<F, S> fromOption<F, S>(Option<S> option, F errorData) {
+    return option.option(
+      () => Failed(errorData),
+      (data) => Success(data),
+    );
+  }
 
   /// Creates [Loaded] from [Either]:
   /// * [Right] -> [Success]
   /// * [Left]  -> [Failed]
-  factory Loaded.fromEither(Either<F, S> either) => either.either(
-        (left) => Failed(left),
-        (right) => Success(right),
-      );
+  static Loaded<F, S> fromEither<F, S>(Either<F, S> either) {
+    return either.either(
+      (left) => Failed(left),
+      (right) => Success(right),
+    );
+  }
 
   @override
   bool get isLoaded => true;
   @override
   bool get isLoading => false;
+
+  @override
+  R branch<R>({
+    @required R Function() ifLoading,
+    @required R Function(F failure) ifFailed,
+    @required R Function(S data) ifSuccess,
+  }) {
+    ArgumentError.checkNotNull(ifLoading, 'ifLoading');
+    return branchLoaded(
+      ifFailed: ifFailed,
+      ifSuccess: ifSuccess,
+    );
+  }
+
+  /// Branches the execution.
+  R branchLoaded<R>({
+    @required R Function(F failure) ifFailed,
+    @required R Function(S data) ifSuccess,
+  });
 }
 
 /// [Loadable] when loading failed, no data.
@@ -166,12 +189,10 @@ class Failed<F, S> extends Loaded<F, S> {
   }
 
   @override
-  R branch<R>({
-    R Function() ifLoading,
-    R Function(F failure) ifFailed,
-    R Function(S data) ifSuccess,
+  R branchLoaded<R>({
+    @required R Function(F failure) ifFailed,
+    @required R Function(S data) ifSuccess,
   }) {
-    ArgumentError.checkNotNull(ifLoading, 'ifLoading');
     ArgumentError.checkNotNull(ifFailed, 'ifFailed');
     ArgumentError.checkNotNull(ifSuccess, 'ifSuccess');
     return ifFailed(failure);
@@ -211,12 +232,10 @@ class Success<F, S> extends Loaded<F, S> {
   }
 
   @override
-  R branch<R>({
-    R Function() ifLoading,
-    R Function(F failure) ifFailed,
-    R Function(S data) ifSuccess,
+  R branchLoaded<R>({
+    @required R Function(F failure) ifFailed,
+    @required R Function(S data) ifSuccess,
   }) {
-    ArgumentError.checkNotNull(ifLoading, 'ifLoading');
     ArgumentError.checkNotNull(ifFailed, 'ifFailed');
     ArgumentError.checkNotNull(ifSuccess, 'ifSuccess');
     return ifSuccess(data);
@@ -230,4 +249,20 @@ class Success<F, S> extends Loaded<F, S> {
 
   @override
   S dataOr(S ifNotSuccess) => data;
+}
+
+/// Method for converting [Option] to [Loaded].
+extension OptionToLoaded<F, S> on Option<S> {
+  /// Extension method using [Loaded.fromOption].
+  Loaded<F, S> toLoaded(F failure) {
+    return Loaded.fromOption(this, failure);
+  }
+}
+
+/// Method for converting [Either] to [Loaded].
+extension EitherToLoaded<F, S> on Either<F, S> {
+  /// Extension method using [Loaded.fromEither].
+  Loaded<F, S> toLoaded() {
+    return Loaded.fromEither(this);
+  }
 }
