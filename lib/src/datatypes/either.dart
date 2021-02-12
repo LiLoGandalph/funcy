@@ -348,9 +348,9 @@ extension IterableEitherExtension<L, R> on Iterable<Either<L, R>> {
 }
 
 /// Method for converting [Option] into [Either].
-extension OptionToEitherExtension<L, R> on Option<R> {
+extension OptionToEitherExtension<R> on Option<R> {
   /// Extension method using [Either.fromOption].
-  Either<L, R> toEither(L leftIfNone) => Either.fromOption(this, leftIfNone);
+  Either<L, R> toEither<L>(L leftIfNone) => Either.fromOption(this, leftIfNone);
 }
 
 /// Method for converting [Loadable] into [Either].
