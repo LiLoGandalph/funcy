@@ -1,3 +1,10 @@
+## 3.1.0
+
+- Fix broken generic parameters in datatype conversion extensions.
+
+- Add [NullableToOption] extension with [asOptional()] to convert nullable
+(actually, any) types to [Option].
+
 ## 3.0.0
 
 - Make [Future] transformer extensions actually useful.

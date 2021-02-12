@@ -2,7 +2,7 @@ name: funcy
 description: Utility classes and functions for comfortable and "safe" functional programming.
 repository: https://github.com/LiLoGandalph/funcy
 
-version: 3.0.0
+version: 3.1.0
 
 environment:
   sdk: '>=2.6.0 <3.0.0'
