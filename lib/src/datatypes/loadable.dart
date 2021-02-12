@@ -252,9 +252,9 @@ class Success<F, S> extends Loaded<F, S> {
 }
 
 /// Method for converting [Option] to [Loaded].
-extension OptionToLoaded<F, S> on Option<S> {
+extension OptionToLoaded<S> on Option<S> {
   /// Extension method using [Loaded.fromOption].
-  Loaded<F, S> toLoaded(F failure) {
+  Loaded<F, S> toLoaded<F>(F failure) {
     return Loaded.fromOption(this, failure);
   }
 }
