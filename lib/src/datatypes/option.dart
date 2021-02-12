@@ -454,3 +454,9 @@ extension LoadableToOption<L, R> on Loadable<L, R> {
   Option<R> toOption({@required Option<R> Function() ifLoading}) =>
       Option.fromLoadable(this, ifLoading: ifLoading);
 }
+
+/// Method for converting any type to [Option].
+extension NullableToOption<T> on T {
+  /// Creates [Option] from nullable value.
+  Option<T> asOptional() => Option.fromNullable(this);
+}
